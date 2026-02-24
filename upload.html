@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaveGo网盘 - 文件上传</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        /* 核心：未授权时隐藏页面，防止内容闪显 */
+        body:not(.authorized) {
+            display: none !important;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: 200% 200%;
+            animation: gradientFlow 15s ease infinite;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .upload-container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-color: #764ba2;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .upload-text strong {
+            color: #667eea;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .file-list {
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-name {
+            flex: 1;
+            word-break: break-all;
+            margin-right: 10px;
+        }
+        
+        .file-size {
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .remove-file {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 10px;
+        }
+        
+        .upload-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .upload-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .link-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .back-link, .logout-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .back-link:hover, .logout-link:hover {
+            text-decoration: underline;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 5px;
+            z-index: 9999;
+            display: none;
+        }
+    </style>
+
+    <!-- 核心：登录态+来源页双校验脚本，优先执行，防止页面内容泄露，和登录页完美适配 -->
+    <script>
+        // 核心配置（必须和登录页完全对应，否则适配失效）
+        const ALLOWED_REFERER_ORIGIN = 'https://wjxyyds666.github.io';
+        const ALLOWED_REFERER_PATH = '/SaveGo/login.html';
+        const LOGIN_PAGE_URL = 'login.html';
+        const AUTH_KEY = 'savego_login_auth';
+
+        // 立即执行验证，不等待DOM加载
+        (function() {
+            let isAuthValid = false;
+            const referrer = document.referrer.trim();
+
+            // 校验1：检查本地登录态（解决刷新页面referrer丢失的核心问题）
+            try {
+                const authData = localStorage.getItem(AUTH_KEY);
+                if (authData) {
+                    const { isLogin, expire } = JSON.parse(authData);
+                    if (isLogin && expire > Date.now()) {
+                        isAuthValid = true;
+                    } else {
+                        // 登录态过期，清除无效凭证
+                        localStorage.removeItem(AUTH_KEY);
+                    }
+                }
+            } catch (error) {
+                localStorage.removeItem(AUTH_KEY);
+            }
+
+            // 校验2：检查来源是否为指定登录页（首次跳转的情况）
+            if (!isAuthValid && referrer) {
+                try {
+                    const referrerUrl = new URL(referrer);
+                    const isAllowedReferer = referrerUrl.origin === ALLOWED_REFERER_ORIGIN && referrerUrl.pathname === ALLOWED_REFERER_PATH;
+                    if (isAllowedReferer) {
+                        isAuthValid = true;
+                    }
+                } catch (error) {
+                    // URL解析失败，校验不通过
+                }
+            }
+
+            // 双校验都不通过，强制跳回登录页
+            if (!isAuthValid) {
+                window.location.replace(LOGIN_PAGE_URL);
+                return;
+            }
+
+            // 验证通过，DOM加载完成后显示页面
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.classList.add('authorized');
+            });
+        })();
+    </script>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>📤 SaveGo网盘上传</h1>
+        
+        <!-- 拖放上传区域 -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                点击或拖放文件到这里<br>
+                <strong>支持多文件上传</strong>
+            </div>
+            <input type="file" id="fileInput" multiple accept="*">
+        </div>
+        
+        <!-- 已选择文件列表 -->
+        <div class="file-list" id="selectedFiles">
+            <div style="text-align: center; color: #888; font-size: 0.9em;">暂无文件</div>
+        </div>
+        
+        <!-- 上传进度 -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progressStatus">准备上传...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+        
+        <!-- 上传按钮 -->
+        <button class="upload-btn" id="uploadBtn" disabled>开始上传</button>
+        
+        <!-- 底部链接组：返回网盘 + 退出登录 -->
+        <div class="link-group">
+            <a href="index.html" class="back-link">← 返回SaveGo网盘</a>
+            <a href="javascript:logout()" class="logout-link">退出登录 →</a>
+        </div>
+    </div>
+
+    <!-- 轻提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ========== 配置区域 ==========
+        const GITHUB_USERNAME = 'wjxyyds666';  // 你的GitHub用户名
+        const GITHUB_REPO = 'SaveGo';     // 你的仓库名
+        const GITHUB_TOKEN = '暂时不填写';  // 注意：这里需要填写你的GitHub Personal Access Token（需要repo权限）
+        // 🔔 重要：Token获取方式：GitHub设置 → Developer settings → Personal access tokens → 生成（勾选repo权限）
+        
+        // ========== 全局变量 ==========
+        let selectedFiles = [];  // 选中的文件列表
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFilesEl = document.getElementById('selectedFiles');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressStatus = document.getElementById('progressStatus');
+        const progressPercent = document.getElementById('progressPercent');
+        const toast = document.getElementById('toast');
+        
+        // ========== 初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 拖放上传
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.background = 'rgba(102, 126, 234, 0.1)';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.background = 'transparent';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.background = 'transparent';
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // 点击上传
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+            
+            // 上传按钮点击
+            uploadBtn.addEventListener('click', startUpload);
+        });
+        
+        // ========== 退出登录功能 ==========
+        function logout() {
+            // 清除登录凭证
+            localStorage.removeItem(AUTH_KEY);
+            showToast('已退出登录，正在跳转...');
+            // 跳回登录页
+            setTimeout(() => {
+                window.location.replace(LOGIN_PAGE_URL);
+            }, 1000);
+        }
+        
+        // ========== 文件选择处理 ==========
+        function handleFiles(files) {
+            // 转换为数组
+            const fileArray = Array.from(files);
+            
+            // 去重（避免重复选择同一文件）
+            const newFiles = fileArray.filter(file => 
+                !selectedFiles.some(existing => existing.name === file.name && existing.size === file.size)
+            );
+            
+            if (newFiles.length === 0) {
+                showToast('文件已选择过');
+                return;
+            }
+            
+            // 添加到选中列表
+            selectedFiles = [...selectedFiles, ...newFiles];
+            
+            // 更新文件列表UI
+            renderFileList();
+            
+            // 启用上传按钮
+            uploadBtn.disabled = false;
+        }
+        
+        // 渲染文件列表
+        function renderFileList() {
+            if (selectedFiles.length === 0) {
+                selectedFilesEl.innerHTML = '<div style="text-align: center; color: #888; font-size: 0.9em;">暂无文件</div>';
+                uploadBtn.disabled = true;
+                return;
+            }
+            
+            selectedFilesEl.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-name">${truncateFileName(file.name, 30)}</div>
+                    <div class="file-size">${formatFileSize(file.size)}</div>
+                    <div class="remove-file" onclick="removeFile(${index})">×</div>
+                </div>
+            `).join('');
+        }
+        
+        // 移除文件
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFileList();
+        }
+        
+        // ========== 上传处理 ==========
+        async function startUpload() {
+            if (!GITHUB_TOKEN) {
+                showToast('请先配置GitHub Token');
+                return;
+            }
+            
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            let totalFiles = selectedFiles.length;
+            let uploadedFiles = 0;
+            let totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+            let uploadedSize = 0;
+            
+            try {
+                for (const file of selectedFiles) {
+                    progressStatus.textContent = `正在上传: ${file.name}`;
+                    
+                    // 读取文件为Base64
+                    const fileContent = await readFileAsBase64(file);
+                    
+                    // 构造GitHub API请求
+                    const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${encodeURIComponent(file.name)}`;
+                    
+                    // 检查文件是否已存在
+                    const existsResponse = await fetch(apiUrl, {
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    const requestBody = {
+                        message: `Upload file: ${file.name}`,  // 提交信息
+                        content: fileContent,                  // 文件内容（Base64）
+                    };
+                    
+                    // 如果文件已存在，添加sha字段（覆盖文件）
+                    if (existsResponse.status === 200) {
+                        const existingFile = await existsResponse.json();
+                        requestBody.sha = existingFile.sha;
+                    }
+                    
+                    // 上传文件
+                    const response = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`上传失败: ${errorData.message || response.statusText}`);
+                    }
+                    
+                    // 更新进度
+                    uploadedFiles++;
+                    uploadedSize += file.size;
+                    updateProgress(uploadedSize / totalSize, `${uploadedFiles}/${totalFiles}`);
+                }
+                
+                // 上传完成
+                updateProgress(1, '上传完成！');
+                showToast('所有文件上传成功！');
+                
+                // 重置状态
+                setTimeout(() => {
+                    selectedFiles = [];
+                    renderFileList();
+                    progressContainer.style.display = 'none';
+                }, 2000);
+                
+            } catch (error) {
+                showToast(`上传失败: ${error.message}`);
+                progressStatus.textContent = '上传失败';
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        // 读取文件为Base64
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // 提取Base64部分（去掉前缀）
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 更新上传进度
+        function updateProgress(progress, status) {
+            const percent = Math.round(progress * 100);
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+            progressStatus.textContent = status;
+        }
+        
+        // ========== 辅助函数 ==========
+        // 截断文件名
+        function truncateFileName(name, maxLength) {
+            if (name.length <= maxLength) return name;
+            return name.slice(0, maxLength) + '...';
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 显示轻提示
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
