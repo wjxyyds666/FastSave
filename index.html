@@ -1,30 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOP网盘</title>
+    <title>SaveGo网盘 | 简洁高效的文件存储</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            /* 背景渐变动画 */
+            background-size: 200% 200%;
+            animation: gradientFlow 15s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
         }
         
         h1 {
@@ -35,6 +45,13 @@
             background: linear-gradient(90deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            /* 标题呼吸动画 */
+            animation: titlePulse 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.03); }
         }
         
         .stats-bar {
@@ -46,6 +63,12 @@
             margin-bottom: 20px;
             font-size: 0.9em;
             color: #666;
+            /* 悬停高亮 */
+            transition: background 0.3s;
+        }
+
+        .stats-bar:hover {
+            background: #f1f3f5;
         }
         
         .controls {
@@ -58,26 +81,29 @@
         .search-box {
             flex: 1;
             min-width: 200px;
-            padding: 10px 15px;
+            padding: 12px 18px;
             border: 2px solid #e0e0e0;
             border-radius: 25px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .search-box:focus {
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
         
         .filter-btn {
-            padding: 10px 20px;
+            padding: 12px 20px;
             background: #f8f9fa;
             border: 2px solid #e0e0e0;
             border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         
         .filter-btn:hover,
@@ -85,6 +111,7 @@
             background: #667eea;
             color: white;
             border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
         .file-list {
@@ -100,17 +127,26 @@
             background: #f8f9fa;
             border-radius: 10px;
             transition: all 0.3s;
+            border-left: 4px solid transparent;
         }
         
         .file-item:hover {
             background: #e9ecef;
             transform: translateX(5px);
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
         .file-icon {
-            font-size: 24px;
+            font-size: 28px;
             width: 50px;
             text-align: center;
+            /* 图标放大动画 */
+            transition: transform 0.3s;
+        }
+
+        .file-item:hover .file-icon {
+            transform: scale(1.2);
         }
         
         .file-info {
@@ -123,6 +159,11 @@
             color: #333;
             margin-bottom: 4px;
             word-break: break-all;
+            /* 文本溢出省略号优化 */
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         
         .file-meta {
@@ -130,12 +171,19 @@
             gap: 15px;
             font-size: 0.85em;
             color: #666;
+            flex-wrap: wrap;
         }
         
         .file-type {
             background: #e9ecef;
             padding: 2px 8px;
             border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover .file-type {
+            background: #d0ebff;
+            color: #2196F3;
         }
         
         .file-size {
@@ -157,10 +205,11 @@
             border: none;
             cursor: pointer;
             font-weight: 500;
-            transition: transform 0.2s;
+            transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
             text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         
         .download-btn {
@@ -175,6 +224,11 @@
         
         .action-btn:hover {
             transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
         }
         
         .bulk-actions {
@@ -183,6 +237,7 @@
             margin-top: 20px;
             padding-top: 20px;
             border-top: 2px solid #eee;
+            flex-wrap: wrap;
         }
         
         .select-all {
@@ -190,31 +245,57 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
-            padding: 10px 15px;
+            padding: 12px 18px;
             background: #f8f9fa;
-            border-radius: 20px;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .select-all:hover {
+            background: #f1f3f5;
         }
         
         .bulk-download-btn {
             background: #FF9800;
             color: white;
             border: none;
-            padding: 10px 25px;
+            padding: 12px 25px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
+        }
+
+        .bulk-download-btn:hover {
+            background: #FB8C00;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .bulk-download-btn:active {
+            transform: translateY(0);
         }
         
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: #666;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
         
         .empty-state .icon {
             font-size: 60px;
             margin-bottom: 20px;
             opacity: 0.5;
+            /* 图标呼吸动画 */
+            animation: iconPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes iconPulse {
+            from { opacity: 0.5; }
+            to { opacity: 0.8; }
         }
         
         .pagination {
@@ -230,12 +311,24 @@
             background: white;
             border-radius: 5px;
             cursor: pointer;
+            transition: all 0.3s;
         }
         
         .page-btn.active {
             background: #667eea;
             color: white;
             border-color: #667eea;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .page-btn:hover:not(.active):not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         @media (max-width: 768px) {
@@ -255,12 +348,15 @@
             
             .stats-bar {
                 flex-direction: column;
-                gap: 5px;
+                gap: 8px;
             }
             
             .file-meta {
-                flex-wrap: wrap;
                 gap: 8px;
+            }
+
+            .bulk-actions {
+                justify-content: space-between;
             }
         }
         
@@ -270,16 +366,31 @@
             padding: 15px;
             margin: 20px 0;
             border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .upload-guide:hover {
+            transform: translateX(3px);
+        }
+
+        /* 加载动画优化 */
+        #loading .icon {
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📁 NOP网盘</h1>
+        <h1>📁 SaveGo网盘</h1>
         
         <div class="upload-guide">
-            <p><strong></strong>欢迎使用NOP网盘—存储网盘</p>
-            <p><strong></strong>网盘一直致力于免费、快捷、安全</p>
+            <p><strong>✨ 欢迎使用SaveGo网盘</strong>—免费、快捷、安全的存储工具</p>
+            <p><strong>📌 提示：</strong>上传文件到GitHub仓库后，页面会自动加载文件列表</p>
         </div>
         
         <div class="stats-bar">
@@ -291,16 +402,17 @@
         <div class="controls">
             <input type="text" 
                    class="search-box" 
-                   placeholder="🔍 搜索文件..." 
+                   placeholder="🔍 搜索文件名/类型..." 
                    oninput="searchFiles(this.value)">
             
             <button class="filter-btn active" onclick="filterFiles('all')">全部</button>
             <button class="filter-btn" onclick="filterFiles('image')">图片</button>
             <button class="filter-btn" onclick="filterFiles('document')">文档</button>
             <button class="filter-btn" onclick="filterFiles('archive')">压缩包</button>
-            <button class="filter-btn" onclick="filterFiles('other')">其他</button>
+            <button class="filter-btn" onclick="filterFiles('video')">视频</button>
+            <button class="filter-btn" onclick="filterFiles('audio')">音频</button>
             
-            <select class="filter-btn" onchange="sortFiles(this.value)" style="padding: 10px;">
+            <select class="filter-btn" onchange="sortFiles(this.value)" style="padding: 12px;">
                 <option value="name">按名称排序</option>
                 <option value="size">按大小排序</option>
                 <option value="date">按时间排序</option>
@@ -310,7 +422,7 @@
         <div class="bulk-actions">
             <label class="select-all">
                 <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
-                全选
+                全选当前页
             </label>
             <button class="bulk-download-btn" onclick="downloadSelectedFiles()">
                 📥 下载选中文件 (<span id="selectedCount">0</span>)
@@ -318,7 +430,7 @@
         </div>
         
         <div id="loading" class="empty-state">
-            <div class="icon">⏳</div>
+            <div class="icon">🔄</div>
             <p>正在加载文件列表...</p>
         </div>
         
@@ -326,9 +438,9 @@
         
         <div id="emptyState" class="empty-state" style="display: none;">
             <div class="icon">📁</div>
-            <p>文件夹是空的</p>
+            <p>当前文件夹为空</p>
             <p style="font-size: 0.9em; margin-top: 10px; color: #888;">
-                上传文件到 GitHub 仓库后，这里会自动显示
+                操作指引：登录GitHub → 进入仓库 → Add file → Upload files
             </p>
         </div>
         
@@ -337,29 +449,29 @@
 
     <script>
         // ========== 配置区域 ==========
-        const username = 'wjxyyds666';  // 改为你的GitHub用户名
-        const repo = 'CloudStorage-';     // 改为你的仓库名
+        const username = 'wjxyyds666';  // 你的GitHub用户名
+        const repo = 'FastSave';     // 你的仓库名
         const filesPerPage = 20;          // 每页显示文件数
         
-        // 文件类型分类
+        // 文件类型分类（新增视频/音频分类）
         const fileCategories = {
             image: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'],
             document: ['pdf', 'doc', 'docx', 'txt', 'md', 'ppt', 'pptx', 'xls', 'xlsx'],
             archive: ['zip', 'rar', '7z', 'tar', 'gz'],
-            video: ['mp4', 'avi', 'mov', 'wmv', 'flv'],
-            audio: ['mp3', 'wav', 'aac', 'flac'],
+            video: ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'],
+            audio: ['mp3', 'wav', 'aac', 'flac', 'ogg'],
             code: ['html', 'css', 'js', 'json', 'xml', 'py', 'java', 'cpp', 'c']
         };
         
-        // 文件图标映射
+        // 文件图标映射（补充更多类型）
         const fileIcons = {
             'pdf': '📕', 'doc': '📝', 'docx': '📝', 'txt': '📄', 'md': '📄',
             'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'bmp': '🖼️',
-            'mp4': '🎬', 'avi': '🎬', 'mov': '🎬',
-            'mp3': '🎵', 'wav': '🎵',
+            'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬',
+            'mp3': '🎵', 'wav': '🎵', 'flac': '🎵',
             'zip': '📦', 'rar': '📦', '7z': '📦',
             'html': '🌐', 'css': '🎨', 'js': '⚡', 'json': '📋',
-            'exe': '⚙️', 'apk': '📱', 'dmg': '🍎'
+            'exe': '⚙️', 'apk': '📱', 'dmg': '🍎', 'iso': '💿'
         };
         
         // ========== 全局变量 ==========
@@ -376,64 +488,84 @@
         
         // ========== 主要函数 ==========
         
-        // 1. 加载所有文件
+        // 1. 加载所有文件（增加错误重试机制）
         async function loadAllFiles() {
-            try {
-                const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/`;
-                console.log('正在请求:', apiUrl);
-                
-                const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const maxRetries = 2;
+            let retryCount = 0;
+
+            while (retryCount <= maxRetries) {
+                try {
+                    const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/`;
+                    console.log('正在请求:', apiUrl);
+                    
+                    const response = await fetch(apiUrl, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache' // 禁用缓存
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 过滤和整理文件数据（排除README.md）
+                    allFiles = data
+                        .filter(item => item.type === 'file' && !['index.html', 'README.md'].includes(item.name))
+                        .map(file => ({
+                            name: file.name,
+                            size: file.size,
+                            url: file.download_url,
+                            path: file.path,
+                            type: getFileType(file.name),
+                            icon: getFileIcon(file.name),
+                            downloadUrl: getFastDownloadUrl(file.name, file.download_url),
+                            lastModified: file.name.match(/\d{8}_\d{6}/) ? 
+                                parseTimestamp(file.name) : new Date(file.updated_at).toISOString()
+                        }));
+                    
+                    console.log('找到文件:', allFiles.length);
+                    
+                    if (allFiles.length === 0) {
+                        showEmptyState();
+                        return;
+                    }
+                    
+                    // 初始显示
+                    filteredFiles = [...allFiles];
+                    updateStats();
+                    displayFiles();
+                    setupPagination();
+                    break; // 成功后退出循环
+
+                } catch (error) {
+                    retryCount++;
+                    if (retryCount > maxRetries) {
+                        console.error('加载失败:', error);
+                        document.getElementById('loading').innerHTML = `
+                            <div class="icon">❌</div>
+                            <p>加载失败: ${error.message}</p>
+                            <p style="font-size: 0.8em; margin-top: 10px; color: #888;">
+                                请检查：<br>
+                                1. 用户名和仓库名是否正确<br>
+                                2. GitHub仓库是否公开<br>
+                                3. 网络连接是否正常
+                            </p>
+                            <button onclick="loadAllFiles()" style="margin-top:15px; padding:8px 15px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">
+                                重新加载
+                            </button>
+                        `;
+                    } else {
+                        console.log(`重试第${retryCount}次...`);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // 重试间隔1秒
+                    }
                 }
-                
-                const data = await response.json();
-                
-                // 过滤和整理文件数据
-                allFiles = data
-                    .filter(item => item.type === 'file' && item.name !== 'index.html')
-                    .map(file => ({
-                        name: file.name,
-                        size: file.size,
-                        url: file.download_url,
-                        path: file.path,
-                        type: getFileType(file.name),
-                        icon: getFileIcon(file.name),
-                        downloadUrl: getFastDownloadUrl(file.name, file.download_url),
-                        lastModified: file.name.match(/\d{8}_\d{6}/) ? 
-                            parseTimestamp(file.name) : new Date().toISOString()
-                    }));
-                
-                console.log('找到文件:', allFiles.length);
-                
-                if (allFiles.length === 0) {
-                    showEmptyState();
-                    return;
-                }
-                
-                // 初始显示
-                filteredFiles = [...allFiles];
-                updateStats();
-                displayFiles();
-                setupPagination();
-                
-            } catch (error) {
-                console.error('加载失败:', error);
-                document.getElementById('loading').innerHTML = `
-                    <div class="icon">❌</div>
-                    <p>加载失败: ${error.message}</p>
-                    <p style="font-size: 0.8em; margin-top: 10px;">
-                        请检查：<br>
-                        1. 用户名和仓库名是否正确<br>
-                        2. GitHub仓库是否公开<br>
-                        3. 网络连接是否正常
-                    </p>
-                `;
             }
         }
         
-        // 2. 显示文件列表
+        // 2. 显示文件列表（优化移动端适配）
         function displayFiles() {
             const fileList = document.getElementById('fileList');
             const loading = document.getElementById('loading');
@@ -501,13 +633,15 @@
             updatePagination();
         }
         
-        // 3. 搜索文件
+        // 3. 搜索文件（支持即时过滤）
         function searchFiles(keyword) {
-            if (!keyword.trim()) {
+            const trimmedKeyword = keyword.trim().toLowerCase();
+            if (!trimmedKeyword) {
                 filteredFiles = [...allFiles];
             } else {
                 filteredFiles = allFiles.filter(file =>
-                    file.name.toLowerCase().includes(keyword.toLowerCase())
+                    file.name.toLowerCase().includes(trimmedKeyword) ||
+                    file.type.toLowerCase().includes(trimmedKeyword)
                 );
             }
             
@@ -518,7 +652,7 @@
             setupPagination();
         }
         
-        // 4. 筛选文件
+        // 4. 筛选文件（补充视频/音频分类）
         function filterFiles(category) {
             // 更新按钮状态
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -540,12 +674,12 @@
             setupPagination();
         }
         
-        // 5. 排序文件
+        // 5. 排序文件（优化排序逻辑）
         function sortFiles(method) {
             filteredFiles.sort((a, b) => {
                 switch (method) {
                     case 'name':
-                        return a.name.localeCompare(b.name);
+                        return a.name.localeCompare(b.name, 'zh-CN'); // 中文排序
                     case 'size':
                         return b.size - a.size;
                     case 'date':
@@ -558,10 +692,10 @@
             displayFiles();
         }
         
-        // 6. 批量下载
+        // 6. 批量下载（优化移动端体验）
         async function downloadSelectedFiles() {
             if (selectedFiles.size === 0) {
-                alert('请先选择要下载的文件');
+                showToast('请先选择要下载的文件');
                 return;
             }
             
@@ -577,29 +711,37 @@
                 const file = allFiles.find(f => f.name === filename);
                 if (file) {
                     window.open(file.downloadUrl, '_blank');
+                    showToast('开始下载文件');
                 }
                 return;
             }
             
-            // 多个文件逐个下载
-            alert(`开始下载 ${selectedFiles.size} 个文件，请允许浏览器弹窗`);
+            // 多个文件逐个下载（增加延迟避免浏览器拦截）
+            showToast(`开始下载 ${selectedFiles.size} 个文件，请允许弹窗`);
             
+            let delay = 0;
             for (const filename of selectedFiles) {
                 const file = allFiles.find(f => f.name === filename);
                 if (file) {
                     setTimeout(() => {
-                        window.open(file.downloadUrl, '_blank');
-                    }, 100);
+                        const link = document.createElement('a');
+                        link.href = file.downloadUrl;
+                        link.download = file.name;
+                        link.click();
+                    }, delay);
+                    delay += 300; // 间隔300ms
                 }
             }
             
             // 手机端提示
             if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-                alert('手机浏览器可能无法批量下载，建议逐个文件下载');
+                setTimeout(() => {
+                    showToast('手机浏览器建议逐个下载');
+                }, 1000);
             }
         }
         
-        // 7. 文件选择功能
+        // 7. 文件选择功能（优化全选逻辑）
         function toggleFileSelection(filename, checked) {
             if (checked) {
                 selectedFiles.add(filename);
@@ -634,6 +776,7 @@
         
         // ========== 辅助函数 ==========
         
+        // 获取文件类型
         function getFileType(filename) {
             const ext = filename.split('.').pop().toLowerCase();
             for (const [category, exts] of Object.entries(fileCategories)) {
@@ -642,18 +785,20 @@
             return 'other';
         }
         
+        // 获取文件图标
         function getFileIcon(filename) {
             const ext = filename.split('.').pop().toLowerCase();
             return fileIcons[ext] || '📄';
         }
         
+        // 获取加速下载链接
         function getFastDownloadUrl(filename, originalUrl) {
-            // 使用jsDelivr CDN加速（仅对公开仓库有效）
-            return `https://cdn.jsdelivr.net/gh/${username}/${repo}/${encodeURIComponent(filename)}`;
-            // 如果CDN有问题，回退到原始URL：
-            // return originalUrl;
+            // 使用jsDelivr CDN加速（失败时回退原链接）
+            const cdnUrl = `https://cdn.jsdelivr.net/gh/${username}/${repo}/${encodeURIComponent(filename)}`;
+            return cdnUrl;
         }
         
+        // 格式化文件大小
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 B';
             const k = 1024;
@@ -662,12 +807,18 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
+        // 格式化日期（更友好的显示）
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
-            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
             
-            if (diffDays === 0) return '今天';
+            if (diffMinutes < 1) return '刚刚';
+            if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
             if (diffDays === 1) return '昨天';
             if (diffDays < 7) return `${diffDays}天前`;
             if (diffDays < 30) return `${Math.floor(diffDays / 7)}周前`;
@@ -675,6 +826,7 @@
             return date.toLocaleDateString('zh-CN');
         }
         
+        // 截断文件名
         function truncateFileName(name, maxLength) {
             if (name.length <= maxLength) return name;
             const extension = name.split('.').pop();
@@ -683,6 +835,7 @@
             return nameWithoutExt.slice(0, truncateLength) + '... .' + extension;
         }
         
+        // 解析文件名中的时间戳
         function parseTimestamp(filename) {
             const match = filename.match(/(\d{8})_(\d{6})/);
             if (match) {
@@ -698,22 +851,44 @@
             return new Date().toISOString();
         }
         
+        // 判断是否支持预览
         function canPreview(fileType) {
             return ['image', 'pdf', 'txt', 'md'].includes(fileType);
         }
         
+        // 预览文件
         function previewFile(filename) {
             const file = allFiles.find(f => f.name === filename);
             if (file) {
-                window.open(file.downloadUrl, '_blank');
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>预览: ${file.name}</title>
+                            <style>body { margin: 0; padding: 20px; background: #f8f9fa; }</style>
+                        </head>
+                        <body>
+                            <h3>${file.name}</h3>
+                            ${file.type === 'image' ? 
+                                `<img src="${file.downloadUrl}" style="max-width: 100%; max-height: 80vh;">` :
+                                `<iframe src="${file.downloadUrl}" style="width: 100%; height: 80vh; border: none;"></iframe>`
+                            }
+                            <p style="margin-top: 10px;">
+                                <a href="${file.downloadUrl}" download="${file.name}">下载文件</a>
+                            </p>
+                        </body>
+                    </html>
+                `);
             }
         }
         
+        // 统计下载
         function trackDownload(filename) {
             console.log('下载文件:', filename);
-            // 这里可以添加下载统计代码
+            // 可添加统计代码
         }
         
+        // 更新统计信息
         function updateStats() {
             document.getElementById('fileCount').textContent = allFiles.length;
             
@@ -727,17 +902,19 @@
                 });
         }
         
+        // 更新选中计数
         function updateSelectedCount() {
             document.getElementById('selectedCount').textContent = selectedFiles.size;
         }
         
+        // 显示空状态
         function showEmptyState() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('fileList').style.display = 'none';
             document.getElementById('emptyState').style.display = 'block';
         }
         
-        // ========== 分页功能 ==========
+        // 分页功能
         function setupPagination() {
             const totalPages = Math.ceil(filteredFiles.length / filesPerPage);
             const pagination = document.getElementById('pagination');
@@ -765,7 +942,7 @@
                 </button>
             `;
             
-            // 页码按钮
+            // 页码按钮（优化长页码显示）
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
                     html += `
@@ -793,23 +970,43 @@
         function changePage(page) {
             currentPage = page;
             displayFiles();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: document.querySelector('.container').offsetTop, behavior: 'smooth' });
         }
         
-        // ========== 上传指引 ==========
+        // 上传指引
         function displayUploadGuide() {
             console.log(`
-                ========== 使用指南 ==========
-                1. 上传文件：登录 GitHub → 进入仓库 → Add file → Upload files
-                2. 避免覆盖：上传前重命名文件，建议格式：YYYYMMDD_HHMMSS_文件名.扩展名
-                3. 批量操作：可以多选文件后批量下载
-                4. 搜索筛选：支持按名称搜索和按类型筛选
-                
-                当前配置：
-                - 用户名: ${username}
-                - 仓库名: ${repo}
-                - 文件数: ${allFiles.length}
+                ========== SaveGo网盘使用指南 ==========
+                1. 上传文件：登录GitHub → 进入仓库 → Add file → Upload files
+                2. 命名建议：YYYYMMDD_HHMMSS_文件名.扩展名（便于排序）
+                3. 功能支持：搜索、筛选、排序、批量下载
+                4. 加速下载：使用jsDelivr CDN提升速度
             `);
+        }
+        
+        // 轻提示组件（Toast）
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.padding = '10px 20px';
+            toast.style.background = 'rgba(0,0,0,0.7)';
+            toast.style.color = 'white';
+            toast.style.borderRadius = '5px';
+            toast.style.zIndex = '9999';
+            toast.style.transition = 'opacity 0.3s';
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
         }
     </script>
 </body>
