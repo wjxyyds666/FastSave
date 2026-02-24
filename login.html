@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaveGo网盘 - 登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-size: 200% 200%;
+            animation: gradientFlow 15s ease infinite;
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .error-message {
+            color: #ff4444;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            display: none;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 5px;
+            z-index: 9999;
+            display: none;
+        }
+    </style>
+
+    <!-- 前置登录校验脚本，优先执行，防止重复登录 -->
+    <script>
+        // 核心配置（必须和上传页完全对应，否则适配失效）
+        const UPLOAD_PAGE_URL = "https://wjxyyds666.github.io/SaveGo/upload.html";
+        const AUTH_KEY = "savego_login_auth";
+
+        // 页面加载时立即校验登录态
+        (function() {
+            try {
+                const authData = localStorage.getItem(AUTH_KEY);
+                if (authData) {
+                    const { isLogin, expire } = JSON.parse(authData);
+                    // 校验是否登录且未过期
+                    if (isLogin && expire > Date.now()) {
+                        // 已有有效登录态，直接跳转到上传页，无需重复登录
+                        window.location.replace(UPLOAD_PAGE_URL);
+                    } else {
+                        // 过期清除无效凭证
+                        localStorage.removeItem(AUTH_KEY);
+                    }
+                }
+            } catch (error) {
+                // 数据异常，清除无效凭证
+                localStorage.removeItem(AUTH_KEY);
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <h1 class="login-title">🔒 SaveGo网盘登录</h1>
+        
+        <div class="input-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" placeholder="请输入用户名">
+        </div>
+        
+        <div class="input-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" placeholder="请输入密码">
+        </div>
+        
+        <button class="login-btn" id="loginBtn" onclick="handleLogin()">登录</button>
+        
+        <div class="error-message" id="errorMsg">用户名或密码错误</div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        // 账号密码配置
+        const CORRECT_USERNAME = "wjx";
+        const CORRECT_PASSWORD = "060718";
+        const AUTH_EXPIRE_HOURS = 24; // 登录态有效期，默认24小时
+
+        // DOM元素
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const loginBtn = document.getElementById("loginBtn");
+        const errorMsg = document.getElementById("errorMsg");
+        const toast = document.getElementById("toast");
+
+        // 核心登录处理
+        function handleLogin() {
+            const inputUsername = usernameInput.value.trim();
+            const inputPassword = passwordInput.value.trim();
+            
+            // 清空错误提示，禁用按钮防止重复点击
+            errorMsg.style.display = "none";
+            loginBtn.disabled = true;
+
+            // 账号密码校验
+            if (inputUsername === CORRECT_USERNAME && inputPassword === CORRECT_PASSWORD) {
+                // 存储带过期时间的登录凭证，和上传页校验逻辑配套
+                const expireTime = Date.now() + AUTH_EXPIRE_HOURS * 60 * 60 * 1000;
+                localStorage.setItem(AUTH_KEY, JSON.stringify({
+                    isLogin: true,
+                    expire: expireTime
+                }));
+
+                // 登录成功提示+跳转
+                showToast("登录成功，正在跳转...");
+                setTimeout(() => {
+                    // 标准跳转，完整传递referrer，适配上传页的来源验证
+                    window.location.href = UPLOAD_PAGE_URL;
+                }, 1500);
+            } else {
+                // 登录失败处理
+                errorMsg.style.display = "block";
+                passwordInput.value = "";
+                loginBtn.disabled = false;
+            }
+        }
+
+        // 回车触发登录（用户名+密码框双支持，提升操作体验）
+        [usernameInput, passwordInput].forEach(input => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !loginBtn.disabled) {
+                    handleLogin();
+                }
+            });
+        });
+
+        // 轻提示工具函数，和上传页风格统一
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = "block";
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
