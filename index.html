@@ -20,7 +20,6 @@
             background-size: 200% 200%;
             animation: gradientFlow 15s ease infinite;
         }
-
         @keyframes gradientFlow {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -48,7 +47,6 @@
             /* 标题呼吸动画 */
             animation: titlePulse 3s ease-in-out infinite alternate;
         }
-
         @keyframes titlePulse {
             from { transform: scale(1); }
             to { transform: scale(1.03); }
@@ -57,6 +55,7 @@
         .stats-bar {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background: #f8f9fa;
             padding: 12px 20px;
             border-radius: 10px;
@@ -65,8 +64,9 @@
             color: #666;
             /* 悬停高亮 */
             transition: background 0.3s;
+            flex-wrap: wrap;
+            gap: 8px;
         }
-
         .stats-bar:hover {
             background: #f1f3f5;
         }
@@ -76,6 +76,7 @@
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: center;
         }
         
         .search-box {
@@ -113,6 +114,29 @@
             border-color: #667eea;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
+
+        /* 新增：管理员按钮专属样式，和原有风格统一 */
+        .admin-btn {
+            padding: 12px 22px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+        .admin-btn:active {
+            transform: translateY(0);
+        }
         
         .file-list {
             display: grid;
@@ -144,7 +168,6 @@
             /* 图标放大动画 */
             transition: transform 0.3s;
         }
-
         .file-item:hover .file-icon {
             transform: scale(1.2);
         }
@@ -180,7 +203,6 @@
             border-radius: 10px;
             transition: all 0.3s;
         }
-
         .file-item:hover .file-type {
             background: #d0ebff;
             color: #2196F3;
@@ -226,7 +248,6 @@
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-
         .action-btn:active {
             transform: scale(0.98);
         }
@@ -250,7 +271,6 @@
             border-radius: 25px;
             transition: background 0.3s;
         }
-
         .select-all:hover {
             background: #f1f3f5;
         }
@@ -266,13 +286,11 @@
             transition: all 0.3s;
             box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
         }
-
         .bulk-download-btn:hover {
             background: #FB8C00;
             box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
             transform: translateY(-2px);
         }
-
         .bulk-download-btn:active {
             transform: translateY(0);
         }
@@ -292,7 +310,6 @@
             /* 图标呼吸动画 */
             animation: iconPulse 2s ease-in-out infinite alternate;
         }
-
         @keyframes iconPulse {
             from { opacity: 0.5; }
             to { opacity: 0.8; }
@@ -320,12 +337,10 @@
             border-color: #667eea;
             box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
-
         .page-btn:hover:not(.active):not(:disabled) {
             border-color: #667eea;
             color: #667eea;
         }
-
         .page-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -348,15 +363,22 @@
             
             .stats-bar {
                 flex-direction: column;
+                align-items: flex-start;
                 gap: 8px;
             }
             
             .file-meta {
                 gap: 8px;
             }
-
             .bulk-actions {
                 justify-content: space-between;
+            }
+            .controls {
+                justify-content: center;
+            }
+            .admin-btn {
+                width: 100%;
+                text-align: center;
             }
         }
         
@@ -368,16 +390,13 @@
             border-radius: 8px;
             transition: transform 0.3s;
         }
-
         .upload-guide:hover {
             transform: translateX(3px);
         }
-
         /* 加载动画优化 */
         #loading .icon {
             animation: spin 1.5s linear infinite;
         }
-
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -388,9 +407,10 @@
     <div class="container">
         <h1>📁 SaveGo网盘</h1>
         
+        <!-- 优化后的上传指引，引导用户点击按钮上传 -->
         <div class="upload-guide">
             <p><strong>✨ 欢迎使用SaveGo网盘</strong>—免费、快捷、安全的存储工具</p>
-            <p><strong>📌 提示：</strong>上传文件到GitHub仓库后，页面会自动加载文件列表</p>
+            <p><strong>📌 提示：</strong>点击右上角【📤 上传管理】按钮，登录后即可上传文件，页面会自动加载文件列表</p>
         </div>
         
         <div class="stats-bar">
@@ -417,6 +437,9 @@
                 <option value="size">按大小排序</option>
                 <option value="date">按时间排序</option>
             </select>
+
+            <!-- 新增：管理员登录/上传按钮，跳转到admin.html -->
+            <a href="admin.html" class="admin-btn">📤 上传管理</a>
         </div>
         
         <div class="bulk-actions">
@@ -436,17 +459,17 @@
         
         <div id="fileList" class="file-list" style="display: none;"></div>
         
+        <!-- 优化后的空状态提示，适配新的上传入口 -->
         <div id="emptyState" class="empty-state" style="display: none;">
             <div class="icon">📁</div>
             <p>当前文件夹为空</p>
             <p style="font-size: 0.9em; margin-top: 10px; color: #888;">
-                操作指引：登录GitHub → 进入仓库 → Add file → Upload files
+                操作指引：点击【📤 上传管理】按钮，登录后即可上传文件
             </p>
         </div>
         
         <div id="pagination" class="pagination" style="display: none;"></div>
     </div>
-
     <script>
         // ========== 配置区域 ==========
         const username = 'wjxyyds666';  // 你的GitHub用户名
@@ -492,7 +515,6 @@
         async function loadAllFiles() {
             const maxRetries = 2;
             let retryCount = 0;
-
             while (retryCount <= maxRetries) {
                 try {
                     const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/`;
@@ -539,7 +561,6 @@
                     displayFiles();
                     setupPagination();
                     break; // 成功后退出循环
-
                 } catch (error) {
                     retryCount++;
                     if (retryCount > maxRetries) {
@@ -977,7 +998,7 @@
         function displayUploadGuide() {
             console.log(`
                 ========== SaveGo网盘使用指南 ==========
-                1. 上传文件：登录GitHub → 进入仓库 → Add file → Upload files
+                1. 上传文件：点击【上传管理】按钮，登录后即可上传文件
                 2. 命名建议：YYYYMMDD_HHMMSS_文件名.扩展名（便于排序）
                 3. 功能支持：搜索、筛选、排序、批量下载
                 4. 加速下载：使用jsDelivr CDN提升速度
