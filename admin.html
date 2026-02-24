@@ -27,7 +27,6 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
         /* 通用容器样式 */
         .container {
             width: 100%;
@@ -39,7 +38,6 @@
             backdrop-filter: blur(8px);
             transition: all 0.3s ease;
         }
-
         /* 登录容器专属样式 */
         .login-container {
             max-width: 400px;
@@ -47,12 +45,10 @@
         .login-container.hidden {
             display: none !important;
         }
-
         /* 上传容器专属样式 */
         .upload-container.hidden {
             display: none !important;
         }
-
         h1 {
             color: #333;
             text-align: center;
@@ -62,7 +58,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         /* 登录表单样式 */
         .input-group {
             margin-bottom: 20px;
@@ -99,7 +94,45 @@
             font-size: 0.85em;
             margin-top: 15px;
         }
-
+        /* 新增：Token配置区域样式，和原有设计完全统一 */
+        .token-config-area {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .token-config-area .tips {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .token-input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .token-input-group input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .token-input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .token-input-group .btn-small {
+            padding: 10px 18px;
+            font-size: 14px;
+            margin: 0;
+            width: auto;
+            white-space: nowrap;
+        }
         /* 上传区域样式 */
         .upload-area {
             border: 2px dashed #667eea;
@@ -185,7 +218,6 @@
             display: flex;
             justify-content: space-between;
         }
-
         /* 底部操作栏 */
         .action-bar {
             display: flex;
@@ -210,7 +242,6 @@
         .logout-btn {
             color: #ff4444;
         }
-
         /* 通用按钮样式 */
         .btn {
             width: 100%;
@@ -235,7 +266,6 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
-
         /* 轻提示样式 */
         .toast {
             position: fixed;
@@ -250,19 +280,20 @@
             display: none;
         }
     </style>
-
     <!-- 前置登录态校验脚本（优先执行，防止内容闪显） -->
     <script>
         // 核心固定配置（禁止随意修改，避免校验失效）
         const AUTH_KEY = 'savego_login_auth';
+        const TOKEN_STORAGE_KEY = 'savego_github_token'; // Token本地存储key
         // ========== 可自定义配置区域（仅修改这里即可） ==========
         const LOGIN_EXPIRE_HOURS = 24; // 登录有效期，单位：小时，默认24小时
         const CORRECT_USERNAME = "wjx"; // 登录用户名
         const CORRECT_PASSWORD = "060718"; // 登录密码
-        // GitHub上传配置
+        // GitHub上传配置（彻底移除硬编码Token，安全无泄露）
         const GITHUB_USERNAME = 'wjxyyds666';
         const GITHUB_REPO = 'SaveGo';
-        const GITHUB_TOKEN = '暂时不填写'; // 需填写你的GitHub Token
+        // 从本地读取Token，代码里再也不放明文，彻底解决安全问题
+        let GITHUB_TOKEN = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
 
         // 登录态校验核心函数（全局通用）
         function checkAuthValid() {
@@ -278,17 +309,21 @@
                 return false;
             }
         }
-
         // 页面加载时立即执行强校验
         window.addEventListener('DOMContentLoaded', () => {
             const loginContainer = document.getElementById('loginContainer');
             const uploadContainer = document.getElementById('uploadContainer');
+            const tokenInput = document.getElementById('tokenInput');
             const isAuthValid = checkAuthValid();
 
             if (isAuthValid) {
                 // 登录态有效，显示上传界面
                 loginContainer.classList.add('hidden');
                 uploadContainer.classList.remove('hidden');
+                // 回填已保存的Token
+                if (GITHUB_TOKEN && tokenInput) {
+                    tokenInput.value = GITHUB_TOKEN;
+                }
             } else {
                 // 登录态无效/过期，清除残留，显示登录界面
                 localStorage.removeItem(AUTH_KEY);
@@ -318,11 +353,22 @@
         <div class="error-message" id="errorMsg">用户名或密码错误</div>
         <div class="login-tips">登录后有效期为24小时，到期需重新登录</div>
     </div>
-
     <!-- 上传界面 -->
     <div class="container upload-container" id="uploadContainer">
         <h1>📤 SaveGo网盘上传</h1>
         
+        <!-- 新增：Token安全配置区域 -->
+        <div class="token-config-area">
+            <div class="tips">
+                <strong>🔐 Token安全配置</strong> | Token仅保存在你的浏览器本地，不会提交到GitHub仓库，彻底杜绝泄露风险
+            </div>
+            <div class="token-input-group">
+                <input type="password" id="tokenInput" placeholder="请输入你的GitHub Personal Access Token">
+                <button class="btn btn-small" onclick="saveToken()">保存Token</button>
+                <button class="btn btn-small" style="background: #ff4444;" onclick="clearToken()">清除</button>
+            </div>
+        </div>
+
         <!-- 拖放上传区域 -->
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
@@ -358,10 +404,8 @@
             <button class="logout-btn" onclick="handleLogout()">退出登录</button>
         </div>
     </div>
-
     <!-- 轻提示 -->
     <div class="toast" id="toast"></div>
-
     <script>
         // ========== 全局DOM元素 ==========
         // 登录相关
@@ -371,6 +415,8 @@
         const errorMsg = document.getElementById('errorMsg');
         const loginContainer = document.getElementById('loginContainer');
         const uploadContainer = document.getElementById('uploadContainer');
+        // Token相关
+        const tokenInput = document.getElementById('tokenInput');
         // 上传相关
         let selectedFiles = [];
         const uploadArea = document.getElementById('uploadArea');
@@ -383,6 +429,29 @@
         const progressPercent = document.getElementById('progressPercent');
         const toast = document.getElementById('toast');
 
+        // ========== Token安全管理功能 ==========
+        // 保存Token到本地
+        function saveToken() {
+            const inputToken = tokenInput.value.trim();
+            if (!inputToken) {
+                showToast('请输入有效的GitHub Token');
+                return;
+            }
+            // 保存到本地存储
+            localStorage.setItem(TOKEN_STORAGE_KEY, inputToken);
+            // 更新全局变量
+            GITHUB_TOKEN = inputToken;
+            showToast('Token已安全保存，关闭页面也不会丢失');
+        }
+
+        // 清除本地Token
+        function clearToken() {
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+            GITHUB_TOKEN = '';
+            tokenInput.value = '';
+            showToast('Token已清除');
+        }
+
         // ========== 登录核心功能 ==========
         // 登录处理
         function handleLogin() {
@@ -392,7 +461,6 @@
             // 清空错误提示，禁用按钮防止重复点击
             errorMsg.style.display = 'none';
             loginBtn.disabled = true;
-
             // 账号密码校验
             if (inputUsername === CORRECT_USERNAME && inputPassword === CORRECT_PASSWORD) {
                 // 计算过期时间戳
@@ -402,12 +470,15 @@
                     isLogin: true,
                     expire: expireTime
                 }));
-
                 // 登录成功提示+切换界面
                 showToast(`登录成功，有效期${LOGIN_EXPIRE_HOURS}小时`);
                 setTimeout(() => {
                     loginContainer.classList.add('hidden');
                     uploadContainer.classList.remove('hidden');
+                    // 回填已保存的Token
+                    if (GITHUB_TOKEN) {
+                        tokenInput.value = GITHUB_TOKEN;
+                    }
                     // 清空输入框，重置按钮状态
                     usernameInput.value = '';
                     passwordInput.value = '';
@@ -420,10 +491,9 @@
                 loginBtn.disabled = false;
             }
         }
-
         // 退出登录处理
         function handleLogout() {
-            // 彻底清除登录态
+            // 清除登录态（可选：退出时不清除Token，下次登录不用重输）
             localStorage.removeItem(AUTH_KEY);
             showToast('已成功退出登录');
             
@@ -440,7 +510,6 @@
                 progressStatus.textContent = '准备上传...';
             }, 1000);
         }
-
         // 回车触发登录
         [usernameInput, passwordInput].forEach(input => {
             input.addEventListener('keydown', (e) => {
@@ -449,7 +518,6 @@
                 }
             });
         });
-
         // ========== 上传核心功能 ==========
         // 初始化上传事件
         document.addEventListener('DOMContentLoaded', () => {
@@ -483,7 +551,6 @@
             // 上传按钮点击
             uploadBtn.addEventListener('click', startUpload);
         });
-
         // 文件选择处理
         function handleFiles(files) {
             const fileArray = Array.from(files);
@@ -501,7 +568,6 @@
             renderFileList();
             uploadBtn.disabled = false;
         }
-
         // 渲染文件列表
         function renderFileList() {
             if (selectedFiles.length === 0) {
@@ -518,14 +584,12 @@
                 </div>
             `).join('');
         }
-
         // 移除文件
         function removeFile(index) {
             selectedFiles.splice(index, 1);
             renderFileList();
         }
-
-        // 上传处理（前置登录态二次校验）
+        // 上传处理（前置登录态+Token双重校验）
         async function startUpload() {
             // 上传前强校验登录态，防止过期后仍能上传
             if (!checkAuthValid()) {
@@ -533,9 +597,9 @@
                 handleLogout(); // 自动退出，跳回登录页
                 return;
             }
-
-            if (!GITHUB_TOKEN || GITHUB_TOKEN === '暂时不填写') {
-                showToast('请先配置GitHub Token');
+            // 校验Token是否已配置
+            if (!GITHUB_TOKEN) {
+                showToast('请先输入并保存GitHub Token');
                 return;
             }
             
@@ -615,7 +679,6 @@
                 uploadBtn.disabled = false;
             }
         }
-
         // ========== 辅助工具函数 ==========
         // 读取文件为Base64
         function readFileAsBase64(file) {
@@ -629,7 +692,6 @@
                 reader.readAsDataURL(file);
             });
         }
-
         // 更新上传进度
         function updateProgress(progress, status) {
             const percent = Math.round(progress * 100);
@@ -637,13 +699,11 @@
             progressPercent.textContent = `${percent}%`;
             progressStatus.textContent = status;
         }
-
         // 截断文件名
         function truncateFileName(name, maxLength) {
             if (name.length <= maxLength) return name;
             return name.slice(0, maxLength) + '...';
         }
-
         // 格式化文件大小
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 B';
@@ -652,7 +712,6 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
-
         // 轻提示
         function showToast(message) {
             toast.textContent = message;
